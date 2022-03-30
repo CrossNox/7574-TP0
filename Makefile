@@ -2,8 +2,8 @@ SHELL := /bin/bash
 PWD := $(shell pwd)
 
 GIT_REMOTE = github.com/CrossNox/7574-TP0
-DOCKER_BIN=podman
-DOCKER_COMPOSE_BIN=podman-compose
+DOCKER_BIN=docker
+DOCKER_COMPOSE_BIN=docker-compose
 
 default: build
 
@@ -28,7 +28,7 @@ docker-image:
 .PHONY: docker-image
 
 docker-compose-up: docker-image
-	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up -d --build
+	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up --scale client1=5 -d --build
 .PHONY: docker-compose-up
 
 docker-compose-down:
