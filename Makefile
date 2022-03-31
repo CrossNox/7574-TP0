@@ -5,6 +5,8 @@ GIT_REMOTE = github.com/CrossNox/7574-TP0
 DOCKER_BIN=docker
 DOCKER_COMPOSE_BIN=docker-compose
 
+NCLIENTS := 2
+
 default: build
 
 all:
@@ -28,11 +30,7 @@ docker-image:
 .PHONY: docker-image
 
 docker-compose-up-scale-client: docker-image
-	local n_clients = 5
-	if [ -z "$(NCLIENTS)" ]; then \
-		n_clients = $(NCLIENTS)
-	fi
-	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up --scale client1=$(n_clients) -d --build
+	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up --scale client=$(NCLIENTS) -d --build
 .PHONY: docker-compose-up-scale-client
 
 docker-compose-up: docker-image
