@@ -2,8 +2,10 @@ SHELL := /bin/bash
 PWD := $(shell pwd)
 
 GIT_REMOTE = github.com/CrossNox/7574-TP0
-DOCKER_BIN=podman
-DOCKER_COMPOSE_BIN=podman-compose
+DOCKER_BIN=docker
+DOCKER_COMPOSE_BIN=docker-compose
+
+NCLIENTS := 2
 
 default: build
 
@@ -26,6 +28,10 @@ docker-image:
 	# is executed, even when client code has not changed
 	# docker rmi `docker images --filter label=intermediateStageToBeDeleted=true -q`
 .PHONY: docker-image
+
+docker-compose-up-scale-client: docker-image
+	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up --scale client=$(NCLIENTS) -d --build
+.PHONY: docker-compose-up-scale-client
 
 docker-compose-up: docker-image
 	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up -d --build
