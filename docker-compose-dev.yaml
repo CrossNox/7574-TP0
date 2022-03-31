@@ -12,8 +12,7 @@ services:
     networks:
       - testing_net
 
-  client1:
-    # container_name: client1
+  client:
     image: client:latest
     entrypoint: "sh /start_client.sh"
     environment:

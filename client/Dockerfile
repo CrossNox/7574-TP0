@@ -18,3 +18,4 @@ FROM busybox:latest
 COPY --from=builder /build/bin/client /client
 COPY ./client/config.yaml /config.yaml
 COPY ./client/start_client.sh /start_client.sh
+ENTRYPOINT ["/bin/sh"]

@@ -27,8 +27,16 @@ docker-image:
 	# docker rmi `docker images --filter label=intermediateStageToBeDeleted=true -q`
 .PHONY: docker-image
 
+docker-compose-up-scale-client: docker-image
+	local n_clients = 5
+	if [ -z "$(NCLIENTS)" ]; then \
+		n_clients = $(NCLIENTS)
+	fi
+	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up --scale client1=$(n_clients) -d --build
+.PHONY: docker-compose-up-scale-client
+
 docker-compose-up: docker-image
-	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up --scale client1=5 -d --build
+	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up -d --build
 .PHONY: docker-compose-up
 
 docker-compose-down:
