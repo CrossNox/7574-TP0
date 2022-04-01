@@ -1,13 +1,22 @@
-import socket
 import logging
-
+import socket
 
 class Server:
     def __init__(self, port, listen_backlog):
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._server_socket.bind(('', port))
+        self._server_socket.bind(("", port))
         self._server_socket.listen(listen_backlog)
+        self._signaled_termination = False
+
+    def _handle_sigterm(self, *args):
+        logging.debug("Got SIGTERM, exiting gracefully")
+        self._signaled_termination = True
+
+    def __del__(self):
+        """Closes resources used."""
+        logging.info("Closing server socket")
+        self._server_socket.close()
 
     def run(self):
         """
@@ -20,9 +29,9 @@ class Server:
 
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
-        while True:
-            client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+        while not self._signaled_termination:
+            with self.__accept_new_connection() as client_sock:
+                self.__handle_client_connection(client_sock)
 
     def __handle_client_connection(self, client_sock):
         """
@@ -32,11 +41,15 @@ class Server:
         client socket will also be closed
         """
         try:
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
+            msg = client_sock.recv(1024).rstrip().decode("utf-8")
             logging.info(
-                'Message received from connection {}. Msg: {}'
-                .format(client_sock.getpeername(), msg))
-            client_sock.send("Your Message has been received: {}\n".format(msg).encode('utf-8'))
+                "Message received from connection {}. Msg: {}".format(
+                    client_sock.getpeername(), msg
+                )
+            )
+            client_sock.send(
+                "Your Message has been received: {}\n".format(msg).encode("utf-8")
+            )
         except OSError:
             logging.info("Error while reading socket {}".format(client_sock))
         finally:
@@ -53,5 +66,5 @@ class Server:
         # Connection arrived
         logging.info("Proceed to accept new connections")
         c, addr = self._server_socket.accept()
-        logging.info('Got connection from {}'.format(addr))
+        logging.info("Got connection from {}".format(addr))
         return c
