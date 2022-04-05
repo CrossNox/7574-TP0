@@ -37,6 +37,9 @@ docker-compose-generate:
 	$(DOCKER_BIN) build -f ./docker_composer_generator/Dockerfile -t "generator:latest"
 	$(DOCKER_BIN) run --rm -i -v $(CURDIR):/outputs/ generator:latest --nclients $(NCLIENTS) --output /outputs/docker-compose-scaled.yaml
 
+docker-compose-scaled: docker-compose-generate
+	$(DOCKER_COMPOSE_BIN) -f $(CURDIR)/docker-compose-scaled.yaml up -d --build
+
 docker-compose-down:
 	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml stop -t 1
 	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml down
