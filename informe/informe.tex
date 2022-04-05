@@ -63,6 +63,16 @@ El segundo punto se resuelve modificando el entrypoint para ejecutar un script d
 \subsubsection{Como ejecutar la nueva directiva de make}
 \texttt{make docker-compose-up-scale-client} escala a un valor por defecto de 2 clientes. Si se quiere modificar esta cantidad por un valor \texttt{N}, se debe ejecutar como \texttt{make docker-compose-up-scale-client NCLIENTS=N}. \cite{MakefileOverridingVariables}
 
+\subsection{Resolución alternativa}
+
+\textbf{Como ver los cambios: }\texttt{git diff v1..v1.1-alternativo}.
+
+Para cumplir estrictamente lo pedido, opté por desarrollar una pequeña CLI en Python que genere el \texttt{yaml} de docker compose con cada cliente creado explícitamente. Para esto, utilizo Jinja2\cite{Jinja} para renderizar un template con la cantidad de clientes requerida.
+
+Para generar el nuevo \texttt{yaml} y levantar los servicios, ejecutar \texttt{make docker-compose-scaled NCLIENTS=N}.
+
+En el root del proyecto se podrá ver un archivo llamado \texttt{docker-compose-scaled.yaml} con la definición explícita de todos los clientes.
+
 \section{Ejercicio 2}
 
 \subsection{Enunciado}

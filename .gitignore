@@ -11,3 +11,4 @@ informe/*.bcf
 informe/*.bbl
 informe/*.blg
 informe/*.run.xml
+docker-compose-scaled.yaml
