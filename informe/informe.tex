@@ -1,0 +1,123 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{mathabx}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage{booktabs}
+\usepackage[english,spanish,es-noindentfirst,es-nosectiondot,es-nolists,
+es-noshorthands,es-lcroman,es-tabla]{babel}
+\usepackage{lmodern}             % Use Latin Modern fonts
+\usepackage[T1]{fontenc}         % Better output when a diacritic/accent is used
+\usepackage[utf8]{inputenc}      % Allows to input accented characters
+\usepackage{textcomp}            % Avoid conflicts with siunitx and microtype
+\usepackage{microtype}           % Improves justification and typography
+\usepackage[svgnames]{xcolor}    % Svgnames option loads navy (blue) colour
+\usepackage[hidelinks,urlcolor=blue]{hyperref}
+\hypersetup{colorlinks=true, allcolors=Navy, pdfstartview={XYZ null null 1}}
+\newtheorem{lemma}{Lema}
+\usepackage[width=14cm,left=3.5cm,marginparwidth=3cm,marginparsep=0.35cm,
+height=21cm,top=3.7cm,headsep=1cm, headheight=1.6cm,footskip=1.2cm]{geometry}
+\usepackage{csquotes}
+\usepackage{biblatex}
+\addbibresource{informe.bib}
+
+\title{Distribuidos I \- TP0}
+\author{Mermet, Ignacio Javier \texttt{98153}}
+\date{Abril 2022}
+
+\begin{document}
+
+\maketitle
+
+\section{Sobre la entrega}
+El código de la entrega se puede encontrar en \href{https://github.com/CrossNox/7574-TP0}{GitHub}. Cada ejercicio tiene un \href{https://github.com/CrossNox/7574-TP0/tags}{Tag} asociado.
+
+\section{Ejercicio 1}
+\subsection{Enunciado}
+Modificar la definición del docker-compose para agregar un nuevo cliente al proyecto.
+
+\subsection{Resolución propuesta}
+
+\textbf{Como ver los cambios: }\texttt{git diff v0..v1}.
+
+Para este ejercicio, y en particular en vistas al ejercicio \texttt{1.1}, la forma más sencilla de resolver el enunciado es agregar una nueva sección en el archivo \texttt{docker-compose.yaml}. Esta sección es casi una copia de la sección \texttt{client1}.
+
+\section{Ejercicio 1.1}
+\subsection{Enunciado}
+Definir un script (en el lenguaje deseado) que permita crear una definición de docker-compose con cantidad de clientes N.
+
+\subsection{Resolución propuesta}
+
+\textbf{Como ver los cambios: }\texttt{git diff v1..v1.1}.
+
+Utilizando \texttt{docker-compose}, no es necesario agregar cada cliente como una sección al archivo \texttt{yaml} de configuración. El flag \texttt{\-\-scale} del comando \texttt{up}\cite{DockerComposeUp} provee la funcionalidad pedida. Utilizarlo requiere dos cambios:
+
+\begin{enumerate}
+	\item Agregar una nueva directiva al archivo \texttt{Makefile} de modo de poder escalar la cantidad de contenedores de clientes.
+	\item No hardcodear la variable de entorno \texttt{CLI\_ID} en cada container de cliente.
+\end{enumerate}
+
+El segundo punto se resuelve modificando el entrypoint para ejecutar un script de bash que obtenga el indice de contenedor de cliente.\cite{IndexContainer} Este script obtiene la IP del contenedor y luego obtiene el indice desde el PTR entry asociado a la IP.
+
+\subsubsection{Como ejecutar la nueva directiva de make}
+\texttt{make docker-compose-up-scale-client} escala a un valor por defecto de 2 clientes. Si se quiere modificar esta cantidad por un valor \texttt{N}, se debe ejecutar como \texttt{make docker-compose-up-scale-client NCLIENTS=N}. \cite{MakefileOverridingVariables}
+
+\section{Ejercicio 2}
+
+\subsection{Enunciado}
+Modificar el cliente y el servidor para lograr que realizar cambios en el archivo de configuración no requiera un nuevo build de las imágenes de Docker para que los mismos sean efectivos. La configuración a través del archivo debe ser injectada al ejemplo y persistida afuera del mismo. (Hint: docker volumes)
+
+\subsection{Resolución propuesta}
+
+\textbf{Como ver los cambios: }\texttt{git diff v1.1..v2}.
+
+En este punto, la resolución es sencillamente definir volumenes\cite{DockerVolumes} para los archivos de configuración tanto del servidor como del cliente. En el caso del cliente, se debe eliminar el comando \texttt{COPY} que copia el archivo \texttt{config.yaml} a la imagen. En el caso del servidor, con agregar la ruta en un archivo \texttt{.dockerignore}\cite{dockerignore}, es suficiente para que lo ignore en el \texttt{COPY} de la carpeta a la imagen.
+
+\section{Ejercicio 3}
+
+\subsection{Enunciado}
+Crear un script que permita testear el correcto funcionamiento del servidor utilizando el comando netcat. Dado que el servidor es un EchoServer, se debe enviar un mensaje el servidor y esperar recibir el mismo mensaje enviado.
+
+Netcat no debe ser instalado en la maquina y no se puede exponer puertos del servidor para realizar la comunicación. (Hint: docker network)
+
+\subsection{Resolución propuesta}
+
+\textbf{Como ver los cambios: }\texttt{git diff v2..v3}.
+
+En este caso, opté por escribir un script de bash que ejecuta \texttt{netcat} dentro de un container de la imagen \texttt{busybox}. Para ver el modo de uso, correr \texttt{sh test\_server.sh \-\-help}.
+
+\section{Ejercicio 4}
+
+\subsection{Enunciado}
+Modificar cliente o servidor (no es necesario modificar ambos) para que el programa termine de forma gracefully al recibir la signal SIGTERM. Terminar la aplicación de forma gracefully implica que todos los sockets y threads/procesos de la aplicación deben cerrarse/joinearse antes que el thread de la aplicación principal muera. Loguear mensajes en el cierre de cada recurso.(Hint: Verificar que hace el flag -t utilizado en comando docker-compose-down)
+
+\subsection{Resolución propuesta}
+
+\textbf{Como ver los cambios: }\texttt{git diff v3..v4}.
+
+Para este ejercicio, opté por modificar el servidor. Quiero hacer foco en dos partes distintas del enunciado para explicar la resolución.
+
+\subsubsection{Terminación por SIGTERM}
+Para este punto, en el archivo principal del servidor configuré como handler la señal \texttt{SIGTERM} a un handler del servidor instanciado\cite{signal}. Este handler configura un flag del servidor que lo hace salir de su loop de ejecución.
+
+\subsubsection{Liberación de recursos}
+Al salir del programa, finaliza el programa. En este momento, la referencia del servidor instanciado se pierde y se llama al \textit{dunder} \texttt{\_\_del\_\_}\cite{DelDunder}, donde se cierra el socket del servidor. La guía de programación con sockets de Python\cite{SocketHOWTO} indica que si bien cuando el recolector de basura recolecta un socket, los cierra automaticamente si fuera necesario. Sin embargo, indica, es un muy mal hábito. Por tanto, también se cierran los sockets creados al aceptar las conexiones, dentro del \texttt{handler} que maneja ese cliente.\footnote{No consideré que esto no es necesario considerando que este socket vive dentro del scope de un context manager.}
+
+\section{Ejercicio 5}
+
+\subsection{Enunciado}
+Modificar el servidor actual para que el mismo permita procesar mensajes y aceptar nuevas conexiones en paralelo.
+
+El alumno puede elegir el lenguaje en el cual desarrollar el nuevo código del servidor. Si el alumno desea realizar las modificaciones en Python, tener en cuenta las limitaciones del lenguaje.
+
+\subsection{Resolución propuesta}
+
+\textbf{Como ver los cambios: }\texttt{git diff v4..v5}.
+Como preámbulo a la resolución propuesta, quiero hacer foco en la última oración del enunciado. La \textit{rule of thumb} en \textit{Python} es que se utiliza \texttt{multiprocessing} cuando se trata de procesamiento CPU-bounded y \texttt{threading} cuando se trata de procesamiento IO-bounded. En el escenario del presente trabajo práctico, no nos encontramos con un caso del llamado \textit{Convoy Effect}\cite{ConvoyEffect}, por tanto utilizar \texttt{threading.Thread} es totalmente aceptable\cite{TTM}, dado que el GIL no es un problema.
+
+Dicho eso, la implementación es relativamente sencilla. Si el cliente mandara más de un mensaje, deberíamos considerar la posibilidad de tener que frenar forzadamente los \texttt{handlers} de las conexiones en un escenario como el del punto 4. Por tanto, creé una clase \texttt{StoppableThread} que hereda de \texttt{threading.Thread} que puede ser frenada forzadamente.\footnote{Esto me ayudó a validar algunos puntos sobre lo dicho anteriormente sobre el GIL.}. La lógica para manejar las nuevas conexiones queda encapsulada en una clase \texttt{ConnectionHandler} que hereda de la anterior.\footnote{Noté luego de haber creado el tag que hay un \texttt{close} del socket en el método \texttt{\_\_del\_\_} que es redundante.}.
+
+\printbibliography
+
+\end{document}
