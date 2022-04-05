@@ -5,6 +5,8 @@ GIT_REMOTE = github.com/CrossNox/7574-TP0
 DOCKER_BIN=podman
 DOCKER_COMPOSE_BIN=podman-compose
 
+NCLIENTS := 2
+
 default: build
 
 all:
@@ -30,6 +32,10 @@ docker-image:
 docker-compose-up: docker-image
 	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml up -d --build
 .PHONY: docker-compose-up
+
+docker-compose-generate:
+	$(DOCKER_BIN) build -f ./docker_composer_generator/Dockerfile -t "generator:latest"
+	$(DOCKER_BIN) run --rm -i -v $(CURDIR):/outputs/ generator:latest --nclients $(NCLIENTS) --output /outputs/docker-compose-scaled.yaml
 
 docker-compose-down:
 	$(DOCKER_COMPOSE_BIN) -f docker-compose-dev.yaml stop -t 1
