@@ -95,7 +95,7 @@ Netcat no debe ser instalado en la maquina y no se puede exponer puertos del ser
 
 \textbf{Como ver los cambios: }\texttt{git diff v2..v3}.
 
-En este caso, opté por escribir un script de bash que ejecuta \texttt{netcat} dentro de un container de la imagen \texttt{busybox}. Para ver el modo de uso, correr \texttt{sh test\_server.sh \-\-help}.
+En este caso, opté por escribir un script de bash que ejecuta \texttt{netcat} dentro de un container de la imagen \texttt{busybox}. Para ver el modo de uso, correr \texttt{sh test\_server.sh -{}-help}.
 
 \section{Ejercicio 4}
 
@@ -109,10 +109,10 @@ Modificar cliente o servidor (no es necesario modificar ambos) para que el progr
 Para este ejercicio, opté por modificar el servidor. Quiero hacer foco en dos partes distintas del enunciado para explicar la resolución.
 
 \subsubsection{Terminación por SIGTERM}
-Para este punto, en el archivo principal del servidor configuré como handler la señal \texttt{SIGTERM} a un handler del servidor instanciado\cite{signal}. Este handler configura un flag del servidor que lo hace salir de su loop de ejecución.
+Para este punto, en el archivo principal del servidor configuré como handler la señal \texttt{SIGTERM} a un método del servidor instanciado\cite{signal}. Este handler configura un flag del servidor que lo hace salir de su loop de ejecución.
 
 \subsubsection{Liberación de recursos}
-Al salir del programa, finaliza el programa. En este momento, la referencia del servidor instanciado se pierde y se llama al \textit{dunder} \texttt{\_\_del\_\_}\cite{DelDunder}, donde se cierra el socket del servidor. La guía de programación con sockets de Python\cite{SocketHOWTO} indica que si bien cuando el recolector de basura recolecta un socket, los cierra automaticamente si fuera necesario. Sin embargo, indica, es un muy mal hábito. Por tanto, también se cierran los sockets creados al aceptar las conexiones, dentro del \texttt{handler} que maneja ese cliente.\footnote{No consideré que esto no es necesario considerando que este socket vive dentro del scope de un context manager.}
+Al salir del loop de ejecución, finaliza el programa. En este momento, la referencia del servidor instanciado se pierde y se llama al \textit{dunder} \texttt{\_\_del\_\_}\cite{DelDunder}, donde se cierra el socket del servidor. La guía de programación con sockets de Python\cite{SocketHOWTO} indica que cuando el recolector de basura recolecta un socket, los cierra automáticamente si fuera necesario. Sin embargo, indica, es un muy mal hábito. Por tanto, también cierro los sockets creados al aceptar las conexiones, dentro del \texttt{handler} que maneja ese cliente.\footnote{No consideré que esto no es necesario dado que este socket vive dentro del scope de un context manager.}
 
 \section{Ejercicio 5}
 
@@ -124,9 +124,10 @@ El alumno puede elegir el lenguaje en el cual desarrollar el nuevo código del s
 \subsection{Resolución propuesta}
 
 \textbf{Como ver los cambios: }\texttt{git diff v4..v5}.
+
 Como preámbulo a la resolución propuesta, quiero hacer foco en la última oración del enunciado. La \textit{rule of thumb} en \textit{Python} es que se utiliza \texttt{multiprocessing} cuando se trata de procesamiento CPU-bounded y \texttt{threading} cuando se trata de procesamiento IO-bounded. En el escenario del presente trabajo práctico, no nos encontramos con un caso del llamado \textit{Convoy Effect}\cite{ConvoyEffect}, por tanto utilizar \texttt{threading.Thread} es totalmente aceptable\cite{TTM}, dado que el GIL no es un problema.
 
-Dicho eso, la implementación es relativamente sencilla. Si el cliente mandara más de un mensaje, deberíamos considerar la posibilidad de tener que frenar forzadamente los \texttt{handlers} de las conexiones en un escenario como el del punto 4. Por tanto, creé una clase \texttt{StoppableThread} que hereda de \texttt{threading.Thread} que puede ser frenada forzadamente.\footnote{Esto me ayudó a validar algunos puntos sobre lo dicho anteriormente sobre el GIL.}. La lógica para manejar las nuevas conexiones queda encapsulada en una clase \texttt{ConnectionHandler} que hereda de la anterior.\footnote{Noté luego de haber creado el tag que hay un \texttt{close} del socket en el método \texttt{\_\_del\_\_} que es redundante.}.
+Dicho eso, la implementación es relativamente sencilla. Si el cliente mandara más de un mensaje, deberíamos considerar la posibilidad de tener que frenar forzosamente los \texttt{handlers} de las conexiones en un escenario como el del punto 4. Por tanto, creé una clase \texttt{StoppableThread} que hereda de \texttt{threading.Thread} que puede ser frenada forzosamente.\footnote{Esto me ayudó a validar algunos puntos sobre lo dicho anteriormente sobre el GIL.}. La lógica para manejar las nuevas conexiones queda encapsulada en una clase \texttt{ConnectionHandler} que hereda de la anterior.\footnote{Noté luego de haber creado el tag que hay un \texttt{close} del socket en el método \texttt{\_\_del\_\_} que es redundante.}.
 
 \printbibliography
 
